@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "47378582655",
+    "project_id": "sdiaavs",
+    "storage_bucket": "sdiaavs.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:47378582655:android:319f0c5f0bd3a009bcc34a",
+        "android_client_info": {
+          "package_name": "com.example.sdiaavs"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBO-DN2RSYiWaJ7CkARxtHiehvjjy1rhN4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
