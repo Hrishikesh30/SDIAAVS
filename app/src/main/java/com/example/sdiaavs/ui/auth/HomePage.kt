@@ -3,13 +3,31 @@ package com.example.sdiaavs.ui.auth
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.sdiaavs.viewModel.AuthViewModel
+import com.example.sdiaavs.viewModel.UserViewModel
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.firestore
 
 @Composable
-fun HomePage(authViewModel: AuthViewModel, onLogout: () -> Unit) {
+fun HomePage(authViewModel: AuthViewModel,userViewModel: UserViewModel, onLogout: () -> Unit) {
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val uid = currentUser?.uid
+    println("*************$uid")
+    // Load user data once when UID is available
+    LaunchedEffect(uid) {
+        if (uid != null && userViewModel.userData == null) {
+            userViewModel.loadUserData(uid)
+        }
+    }
+
+    val userData = userViewModel.userData
+    println("*************$userData")
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -18,7 +36,10 @@ fun HomePage(authViewModel: AuthViewModel, onLogout: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Welcome to Home Page!",
+            text = if (userData != null)
+                "Welcome to Home Page! ${userData.name}"
+            else
+                "Loading...",
             style = MaterialTheme.typography.headlineMedium
         )
         Spacer(modifier = Modifier.height(16.dp))

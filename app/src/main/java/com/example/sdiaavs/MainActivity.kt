@@ -9,12 +9,14 @@ import com.example.sdiaavs.ui.auth.HomePage
 import com.example.sdiaavs.ui.auth.LoginPage
 import com.example.sdiaavs.viewModel.AuthViewModel
 import com.example.sdiaavs.viewModel.AuthViewModelFactory
+import com.example.sdiaavs.viewModel.UserViewModel
 
 class MainActivity : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by viewModels {
         AuthViewModelFactory(AuthRepo())  // Passing AuthRepo as dependency
     }
+    private val userViewModel: UserViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,7 +28,8 @@ class MainActivity : ComponentActivity() {
             // Check if the user is logged in or not and show the appropriate page
             if (isLoggedIn) {
                 // Show HomePage when logged in
-                HomePage(authViewModel = authViewModel, onLogout = {
+                HomePage(authViewModel = authViewModel,
+                    userViewModel = userViewModel, onLogout = {
                     isLoggedIn = false
                     // You can also handle navigation to the login screen here
                 })
