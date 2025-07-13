@@ -8,56 +8,122 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.sdiaavs.viewModel.AuthViewModel
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import com.example.sdiaavs.R
 
 @Composable
-fun LoginPage(
-    authViewModel: AuthViewModel,  // Add this parameter for the viewModel
-    onLoginSuccess: () -> Unit,    // Callback when login is successful
-    onSignupClick: () -> Unit      // Navigate to signup page
-) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf("") }
+fun LoginContent(
+    email: String,
+    password: String,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onLoginClick: () -> Unit,
+    onSignupClick: () -> Unit,
+    errorMessage: String
+) {    Box(modifier = Modifier
+    .fillMaxSize()
+    .padding(24.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .align(Alignment.Center),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // App Logo
+        Image(
+            painter = painterResource(id = R.drawable.testlogo),
+            contentDescription = "App Logo",
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape)
+        )
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(text = "Login", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "Welcome Back!",
+            style = MaterialTheme.typography.headlineMedium
+        )
+
+        // Email Field
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = onEmailChange,
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(8.dp))
+
+        // Password Field
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = onPasswordChange,
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(16.dp))
+
+        // Login Button
         Button(
-            onClick = {
-                authViewModel.login(email, password) { success, uid ->
-                    if (success) {
-                        onLoginSuccess()  // Navigate to Home Page
-                    } else {
-                        errorMessage = "Login failed! Please try again."
-                    }
-                }
-            },
+            onClick = onLoginClick,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Login")
+            Text("Login")
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onSignupClick, modifier = Modifier.fillMaxWidth()) {
-            Text(text = "Go to Signup")
+
+        // Signup Link
+        TextButton(onClick = onSignupClick) {
+            Text("Don't have an account? Sign up")
         }
-        Spacer(modifier = Modifier.height(8.dp))
+
+        // Error message
         if (errorMessage.isNotEmpty()) {
-            Text(text = errorMessage, color = MaterialTheme.colorScheme.error)
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
+}
+
+}
+@Composable
+fun LoginPage(
+    authViewModel: AuthViewModel,
+    onLoginSuccess: () -> Unit,
+    onSignupClick: () -> Unit
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf("") }
+
+    LoginContent(
+        email = email,
+        password = password,
+        onEmailChange = { email = it },
+        onPasswordChange = { password = it },
+        onLoginClick = {
+            authViewModel.login(email, password) { success, _ ->
+                if (success) onLoginSuccess() else error = "Login failed!"
+            }
+        },
+        onSignupClick = onSignupClick,
+        errorMessage = error
+    )
+}
+@Preview(showBackground = true)
+@Composable
+fun LoginPreview() {
+    LoginContent(
+        email = "test@example.com",
+        password = "password123",
+        onEmailChange = {},
+        onPasswordChange = {},
+        onLoginClick = {},
+        onSignupClick = {},
+        errorMessage = ""
+    )
 }

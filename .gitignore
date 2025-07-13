@@ -17,3 +17,7 @@ app/.idea/
 native/
 wrapper/
 .idea/
+/android/
+/caches/
+/daemon/
+/kotlin-profile/
