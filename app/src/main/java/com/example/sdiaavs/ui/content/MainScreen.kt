@@ -13,6 +13,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import com.example.sdiaavs.dataModel.NavItem
 import com.example.sdiaavs.viewModel.AuthViewModel
 import com.example.sdiaavs.viewModel.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 
 @Composable
@@ -39,6 +41,16 @@ fun MainScreen(
     var selectedItem by remember {
         mutableIntStateOf(0)
     }
+
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val uid = currentUser?.uid
+
+    LaunchedEffect(uid) {
+        if (uid != null && userViewModel.userData == null) {
+            userViewModel.loadUserData(uid)
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
@@ -83,7 +95,6 @@ fun ContentScreen(
 ) {
     when (selectedItem) {
         0 -> HomePage(
-            authViewModel = authViewModel,
             userViewModel = userViewModel,
         )
 

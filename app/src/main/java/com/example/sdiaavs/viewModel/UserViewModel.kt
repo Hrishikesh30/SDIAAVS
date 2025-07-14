@@ -12,6 +12,7 @@ class UserViewModel : ViewModel() {
     val userData: UserData? get() = _userData.value
 
     fun loadUserData(uid: String) {
+        if (_userData.value != null) return  // Already fetched
         Firebase.firestore.collection("users").document(uid).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
@@ -19,11 +20,11 @@ class UserViewModel : ViewModel() {
                     println("✅ User fetched: $user")
                     _userData.value = user
                 } else {
-                    println("❌ Document with UID $uid does NOT exist.")
+                    println("Document with UID $uid does NOT exist.")
                 }
             }
             .addOnFailureListener { exception ->
-                println("🔥 Error fetching user: ${exception.message}")
+                println(" Error fetching user: ${exception.message}")
             }
     }
 
