@@ -21,3 +21,4 @@ wrapper/
 /caches/
 /daemon/
 /kotlin-profile/
+.tmp/

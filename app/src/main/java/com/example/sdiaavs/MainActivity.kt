@@ -4,12 +4,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.example.sdiaavs.repository.AuthRepo
-import com.example.sdiaavs.ui.auth.HomePage
+import com.example.sdiaavs.ui.content.HomePage
 import com.example.sdiaavs.ui.auth.LoginPage
+import com.example.sdiaavs.ui.content.MainScreen
 import com.example.sdiaavs.viewModel.AuthViewModel
 import com.example.sdiaavs.viewModel.AuthViewModelFactory
 import com.example.sdiaavs.viewModel.UserViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
 
@@ -23,12 +26,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             // Track whether the user is logged in or not
-            var isLoggedIn by remember { mutableStateOf(false) }
+            var isLoggedIn by rememberSaveable { mutableStateOf(FirebaseAuth.getInstance().currentUser != null) }
 
             // Check if the user is logged in or not and show the appropriate page
             if (isLoggedIn) {
                 // Show HomePage when logged in
-                HomePage(authViewModel = authViewModel,
+                MainScreen(authViewModel = authViewModel,
                     userViewModel = userViewModel, onLogout = {
                     isLoggedIn = false
                     // You can also handle navigation to the login screen here
