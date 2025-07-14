@@ -10,6 +10,7 @@ data class UserData(
     var firmName: String = "",
     var phone: String = "",
     var region: String = "",
-    var userID: String = ""
+    var userID: String = "",
+    val typeOfParty: String? =null,
+    val authDOC: List<String>?=null
 )
-
