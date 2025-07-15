@@ -12,7 +12,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.sdiaavs.R
 
 @Composable
@@ -23,7 +27,8 @@ fun LoginContent(
     onPasswordChange: (String) -> Unit,
     onLoginClick: () -> Unit,
     onSignupClick: () -> Unit,
-    errorMessage: String
+    errorMessage: String,
+    navController: NavController
 ) {    Box(modifier = Modifier
     .fillMaxSize()
     .padding(24.dp)) {
@@ -34,18 +39,20 @@ fun LoginContent(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // App Logo
         Image(
-            painter = painterResource(id = R.drawable.testlogo),
+            painter = painterResource(id = R.drawable.sdiaavs4),
             contentDescription = "App Logo",
             modifier = Modifier
                 .size(100.dp)
                 .clip(CircleShape)
         )
 
-        Text(
-            text = "Welcome Back!",
-            style = MaterialTheme.typography.headlineMedium
+        Image(
+            painter = painterResource(id = R.drawable.sdiaavs1),
+            contentDescription = "Banner",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp) // avoid pushing layout
         )
 
         // Email Field
@@ -77,7 +84,12 @@ fun LoginContent(
         TextButton(onClick = onSignupClick) {
             Text("Don't have an account? Sign up")
         }
-
+        TextButton(
+            onClick = { navController.navigate("adminLogin") },
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text("Admin? Login here", style = TextStyle(color = Color.Blue))
+        }
         // Error message
         if (errorMessage.isNotEmpty()) {
             Text(
@@ -94,11 +106,13 @@ fun LoginContent(
 fun LoginPage(
     authViewModel: AuthViewModel,
     onLoginSuccess: () -> Unit,
-    onSignupClick: () -> Unit
+    onSignupClick: () -> Unit,
+    navController: NavController
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
+
 
     LoginContent(
         email = email,
@@ -110,8 +124,10 @@ fun LoginPage(
                 if (success) onLoginSuccess() else error = "Login failed!"
             }
         },
+
         onSignupClick = onSignupClick,
-        errorMessage = error
+        errorMessage = error,
+        navController = navController
     )
 }
 @Preview(showBackground = true)
@@ -124,6 +140,7 @@ fun LoginPreview() {
         onPasswordChange = {},
         onLoginClick = {},
         onSignupClick = {},
-        errorMessage = ""
+        errorMessage = "",
+        navController = rememberNavController()
     )
 }

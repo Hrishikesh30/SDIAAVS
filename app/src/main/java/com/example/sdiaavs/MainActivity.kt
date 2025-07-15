@@ -5,10 +5,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.sdiaavs.repository.AuthRepo
 import com.example.sdiaavs.ui.content.HomePage
 import com.example.sdiaavs.ui.auth.LoginPage
 import com.example.sdiaavs.ui.content.MainScreen
+import com.example.sdiaavs.ui.content.admin.AdminLoginPage
 import com.example.sdiaavs.viewModel.AuthViewModel
 import com.example.sdiaavs.viewModel.AuthViewModelFactory
 import com.example.sdiaavs.viewModel.UserViewModel
@@ -25,28 +28,71 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            // Track whether the user is logged in or not
-            var isLoggedIn by rememberSaveable { mutableStateOf(FirebaseAuth.getInstance().currentUser != null) }
-
-            // Check if the user is logged in or not and show the appropriate page
-            if (isLoggedIn) {
-                // Show HomePage when logged in
-                MainScreen(authViewModel = authViewModel,
-                    userViewModel = userViewModel, onLogout = {
-                    isLoggedIn = false
-                    // You can also handle navigation to the login screen here
-                })
+            val navController = rememberNavController()
+            val startDestination = if (FirebaseAuth.getInstance().currentUser != null) {
+                "userHome"
             } else {
-                // Show LoginPage if not logged in
-                LoginPage(
-                    authViewModel = authViewModel,  // Pass the AuthViewModel to LoginPage
-                    onLoginSuccess = {
-                        isLoggedIn = true  // Set login state to true when login is successful
-                    },
-                    onSignupClick = {
-                        // Navigate to Signup page if needed
-                    }
-                )
+                "userLogin"
+            }
+
+            androidx.navigation.compose.NavHost(
+                navController = navController,
+                startDestination = startDestination
+            ) {
+                composable("userLogin") {
+                    LoginPage(
+                        authViewModel = authViewModel,
+                        onLoginSuccess = {
+                            navController.navigate("userHome") {
+                                popUpTo("userLogin") { inclusive = true }
+                            }
+                        },
+                        onSignupClick = {
+                            navController.navigate("signup")
+                        },
+                        navController = navController // Pass controller for "Admin? Login here"
+                    )
+                }
+
+                composable("adminLogin") {
+                    AdminLoginPage(
+                        navController = navController
+                    )
+                }
+
+                composable("userHome") {
+                    MainScreen(
+                        authViewModel = authViewModel,
+                        userViewModel = userViewModel,
+                        onLogout = {
+                            FirebaseAuth.getInstance().signOut()
+                            navController.navigate("userLogin") {
+                                popUpTo("userHome") { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
+//                composable("adminHome") {
+//                    AdminDashboardScreen(
+//                        onLogout = {
+//                            FirebaseAuth.getInstance().signOut()
+//                            navController.navigate("adminLogin") {
+//                                popUpTo("adminHome") { inclusive = true }
+//                            }
+//                        }
+//                    )
+//                }
+//
+//                composable("signup") {
+//                    SignupScreen(
+//                        onSignupSuccess = {
+//                            navController.navigate("userHome") {
+//                                popUpTo("signup") { inclusive = true }
+//                            }
+//                        }
+//                    )
+//                }
             }
         }
     }
