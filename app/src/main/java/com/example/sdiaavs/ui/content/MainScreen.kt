@@ -103,7 +103,7 @@ fun ContentScreen(
         1 -> ProfilePage(
             modifier = Modifier,
             userViewModel = userViewModel,
-
+            authViewModel = authViewModel
         )
 
         2 -> SearchPage()

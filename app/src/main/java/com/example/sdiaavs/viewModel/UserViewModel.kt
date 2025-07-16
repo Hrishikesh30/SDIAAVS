@@ -28,6 +28,17 @@ class UserViewModel : ViewModel() {
             }
     }
 
+    fun updateUserData(uid: String, updatedData: UserData, onComplete: () -> Unit) {
+        Firebase.firestore.collection("users").document(uid).set(updatedData)
+            .addOnSuccessListener {
+                println("✅ User data updated successfully.")
+                onComplete()
+            }
+            .addOnFailureListener { exception ->
+                println("Error updating user data: ${exception.message}")
+            }
+    }
+
 
     fun clearUserData() {
         _userData.value = null

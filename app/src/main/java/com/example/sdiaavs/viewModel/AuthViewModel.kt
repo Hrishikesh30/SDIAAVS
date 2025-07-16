@@ -3,9 +3,11 @@ package com.example.sdiaavs.viewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.sdiaavs.repository.AuthRepo
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 class AuthViewModel(private val authRepo: AuthRepo = AuthRepo()) : ViewModel() {
+    val uid: String? get() = FirebaseAuth.getInstance().currentUser?.uid
 
     // Function for login
     fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
