@@ -96,13 +96,14 @@ fun ContentScreen(
     when (selectedItem) {
         0 -> HomePage(
             userViewModel = userViewModel,
+            authViewModel = authViewModel,
+            onLogoutClick = onLogout
         )
 
         1 -> ProfilePage(
-            authViewModel= authViewModel,
             modifier = Modifier,
             userViewModel = userViewModel,
-            onLogoutClick = onLogout
+
         )
 
         2 -> SearchPage()
