@@ -46,7 +46,7 @@ fun MainScreen(
     val uid = currentUser?.uid
 
     LaunchedEffect(uid) {
-        if (uid != null && userViewModel.userData == null) {
+        if (uid != null ) {
             userViewModel.loadUserData(uid)
         }
     }

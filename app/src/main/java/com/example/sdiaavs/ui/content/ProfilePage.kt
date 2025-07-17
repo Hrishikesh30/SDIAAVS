@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,11 +16,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -27,7 +35,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.sdiaavs.dataModel.UserData
@@ -40,37 +50,39 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-
 @Composable
 fun ProfilePage(
     userViewModel: UserViewModel,
     authViewModel: AuthViewModel,
     modifier: Modifier = Modifier
 ) {
-    val user = userViewModel.userData
+    val user by userViewModel.userData
     val context = LocalContext.current
     val uid = authViewModel.uid
 
-    if (user != null) {
+
+    user?.let { u ->
         val profileViewModel = remember { ProfileViewModel(userViewModel) }
         LaunchedEffect(Unit) {
-            profileViewModel.initializeFromUser(user)
+                profileViewModel.initializeFromUser(u)
         }
         ProfileContent(
-            user = user,
+            user = u,
             viewModel = profileViewModel,
+
             onSave = {
                 if (uid != null) {
-                    profileViewModel.saveChanges(uid, user) {
+                    profileViewModel.saveChanges(uid, u) {
+                        userViewModel.loadUserData(uid)
                         Toast.makeText(context, "Profile updated", Toast.LENGTH_SHORT).show()
                     }
                 }
             },
             onCancel = {
-                profileViewModel.cancelEditing(user)
+                profileViewModel.cancelEditing(u)
             }
         )
-    } else {
+    } ?: run {
         Box(
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -127,6 +139,7 @@ fun ProfileContent(
             EditableProfileField("Phone", phone) { viewModel.updateField("phone", it) }
             EditableDatePicker("Date of Birth", dob) { viewModel.updateField("dob", it) }
             EditableDatePicker("Anniversary", anniversary) { viewModel.updateField("anniversary", it) }
+
         } else {
             ProfileField("Firm Address", firmAddress)
             ProfileField("Region", region)
@@ -136,6 +149,9 @@ fun ProfileContent(
         }
 
         ProfileField("Type of Party", user.typeOfParty ?: "-")
+        if(isEditing){
+            EditableAuthDealer(profileViewModel = viewModel)
+        }
         if (!user.authDOC.isNullOrEmpty()) {
             Card {
                 Column(modifier = Modifier.padding(12.dp)) {
@@ -239,6 +255,64 @@ fun EditableDatePicker(
                 text = value.ifBlank { "Select date" },
                 style = MaterialTheme.typography.bodyMedium
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun EditableAuthDealer(profileViewModel: ProfileViewModel) {
+    val query by profileViewModel.query
+    val suggestions by profileViewModel.suggestions
+    val selectedCompanies by profileViewModel.selectedCompanies
+
+    Column {
+        OutlinedTextField(
+            value = query,
+            onValueChange = {
+                profileViewModel.updateQuery(it, profileViewModel::searchCompaniesByPrefix)
+            },
+            label = { Text("Search Company") }
+        )
+
+        suggestions.forEach { companyName ->
+            Text(
+                text = companyName,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        profileViewModel.selectCompany(companyName)
+                    }
+                    .padding(8.dp)
+            )
+        }
+
+        // Show selected companies with ❌
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 8.dp)
+        ) {
+            selectedCompanies.forEach { company ->
+                AssistChip(
+                    onClick = { profileViewModel.removeCompany(company) },
+                    label = {
+                        Text(
+                            text = company,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
+                        )
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Remove",
+                            tint = Color.Gray
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors()
+                )
+            }
         }
     }
 }

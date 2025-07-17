@@ -3,9 +3,13 @@ package com.example.sdiaavs.viewModel
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.sdiaavs.dataModel.UserData
+import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.firestore
 import java.text.SimpleDateFormat
 import java.util.Locale
+import androidx.compose.runtime.getValue
+
 
 class ProfileViewModel(
     private val userViewModel: UserViewModel
@@ -24,6 +28,40 @@ class ProfileViewModel(
         private set
     var anniversary = mutableStateOf("")
         private set
+    var authDOC = mutableStateOf<List<String>>(emptyList()) // List of company IDs
+        private set
+
+    var query = mutableStateOf("")
+        private set
+
+    var suggestions = mutableStateOf<List<String>>(emptyList())
+        private set
+
+    var selectedCompanies = mutableStateOf<List<String>>(emptyList())
+        private set
+
+    fun updateQuery(newQuery: String, searchFunction: (String, (List<String>) -> Unit) -> Unit) {
+        query.value = newQuery
+        searchFunction(newQuery) { results ->
+            suggestions.value = results
+        }
+    }
+
+    fun selectCompany(company: String) {
+        val updated = selectedCompanies.value.toMutableList()
+        if (!updated.contains(company)) {
+            updated.add(company)
+            selectedCompanies.value = updated
+        }
+        query.value = ""
+        suggestions.value = emptyList()
+    }
+
+    fun removeCompany(company: String) {
+        val updated = selectedCompanies.value.toMutableList()
+        updated.remove(company)
+        selectedCompanies.value = updated
+    }
 
     fun initializeFromUser(user: UserData) {
         firmAddress.value = user.firmAddress ?: ""
@@ -31,6 +69,8 @@ class ProfileViewModel(
         phone.value = user.phone ?: ""
         dob.value = formatTimestamp(user.dob)
         anniversary.value = formatTimestamp(user.anniversary)
+        authDOC.value = user.authDOC ?: emptyList()
+        selectedCompanies.value = user.authDOC ?: emptyList()
     }
 
     fun updateField(field: String, value: String) {
@@ -40,7 +80,12 @@ class ProfileViewModel(
             "phone" -> phone.value = value
             "dob" -> dob.value = value
             "anniversary" -> anniversary.value = value
+            "authDOC" -> authDOC.value = listOf(value)
         }
+    }
+
+    fun updateAuthDealerList(newList: List<String>) {
+        authDOC.value = newList
     }
 
     fun toggleEditing() {
@@ -58,7 +103,8 @@ class ProfileViewModel(
             region = region.value,
             phone = phone.value,
             dob = parseToTimestamp(dob.value),
-            anniversary = parseToTimestamp(anniversary.value)
+            anniversary = parseToTimestamp(anniversary.value),
+            authDOC = selectedCompanies.value
         )
 
         userViewModel.updateUserData(uid, updatedUser) {
@@ -84,4 +130,27 @@ class ProfileViewModel(
             null
         }
     }
+
+    fun searchCompaniesByPrefix(prefix: String, onResult: (List<String>) -> Unit) {
+        val db = Firebase.firestore
+        db.collection("companies")
+            .orderBy("companyName")
+            .startAt(prefix)
+            //.endAt(prefix + "\uf8ff")
+            .limit(10)
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val names = querySnapshot.documents.mapNotNull { it.getString("companyName") }
+                println("db valuew:$db")
+                println("🔍 Found companies: $names")
+                onResult(names)
+            }
+            .addOnFailureListener { e ->
+                println("❌ Error fetching companies: ${e.localizedMessage}")
+            }
+
+    }
+
+
+
 }

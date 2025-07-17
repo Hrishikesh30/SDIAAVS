@@ -10,6 +10,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,7 +31,7 @@ fun HomePageContent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = name?.let { "Welcome to Home Page! $it" } ?: "Loading...",
+            text = name?.let { "आपका स्वागत है ! $it" } ?: "Loading...",
             style = MaterialTheme.typography.headlineMedium
         )
         Button(onClick = onLogoutClick) {
@@ -46,7 +47,7 @@ fun HomePage(
     userViewModel: UserViewModel,
     onLogoutClick: () -> Unit
 ) {
-    val userData = userViewModel.userData
+    val userData by userViewModel.userData
 
     HomePageContent(
         name = userData?.name,
