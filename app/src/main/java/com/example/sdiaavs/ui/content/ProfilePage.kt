@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -26,6 +28,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -80,6 +83,13 @@ fun ProfilePage(
             },
             onCancel = {
                 profileViewModel.cancelEditing(u)
+            },
+            onPasswordUpdate = {
+                uid?.let {
+                    authViewModel.updatePassword(it, newPassword = "") {
+                        Toast.makeText(context, "Password updated", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         )
     } ?: run {
@@ -98,7 +108,8 @@ fun ProfileContent(
     user: UserData,
     viewModel: ProfileViewModel,
     onSave: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    onPasswordUpdate: () -> Unit
 ) {
     val isEditing by viewModel.isEditing
     val firmAddress by viewModel.firmAddress
@@ -106,62 +117,109 @@ fun ProfileContent(
     val phone by viewModel.phone
     val dob by viewModel.dob
     val anniversary by viewModel.anniversary
-
-    Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Row 1: Title
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("👤 User Profile", style = MaterialTheme.typography.headlineSmall)
+            Text(
+                text = "\uD83D\uDC64 Profile",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            ProfileActionButtons(
+                onSave = onSave,
+                onCancel = onCancel,
+                onEdit = { viewModel.toggleEditing() },
+                onChangePassword = onPasswordUpdate,
+                isEditing = isEditing,
+                modifier = Modifier.alignByBaseline()
+            )
+        }
+
+
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+
+            ProfileField("Name", user.name ?: "-")
+            ProfileField("User ID", user.email ?: "-")
+            ProfileField("Firm Name", user.firmName ?: "-")
 
             if (isEditing) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onSave) { Text("Save") }
-                    Button(onClick = onCancel) { Text("Cancel") }
-                }
+                EditableProfileField(
+                    "Firm Address",
+                    firmAddress
+                ) { viewModel.updateField("firmAddress", it) }
+                EditableProfileField("Region", region) { viewModel.updateField("region", it) }
+                EditableProfileField("Phone", phone) { viewModel.updateField("phone", it) }
+                EditableDatePicker("Date of Birth", dob) { viewModel.updateField("dob", it) }
+                EditableDatePicker(
+                    "Anniversary",
+                    anniversary
+                ) { viewModel.updateField("anniversary", it) }
+
             } else {
-                Button(onClick = { viewModel.toggleEditing() }) { Text("Edit") }
+                ProfileField("Firm Address", firmAddress)
+                ProfileField("Region", region)
+                ProfileField("Phone", phone)
+                ProfileField("Date of Birth", dob)
+                ProfileField("Anniversary", anniversary)
             }
-        }
 
-        ProfileField("Name", user.name ?: "-")
-        ProfileField("User ID", user.email ?: "-")
-        ProfileField("Firm Name", user.firmName ?: "-")
-
-        if (isEditing) {
-            EditableProfileField("Firm Address", firmAddress) { viewModel.updateField("firmAddress", it) }
-            EditableProfileField("Region", region) { viewModel.updateField("region", it) }
-            EditableProfileField("Phone", phone) { viewModel.updateField("phone", it) }
-            EditableDatePicker("Date of Birth", dob) { viewModel.updateField("dob", it) }
-            EditableDatePicker("Anniversary", anniversary) { viewModel.updateField("anniversary", it) }
-
-        } else {
-            ProfileField("Firm Address", firmAddress)
-            ProfileField("Region", region)
-            ProfileField("Phone", phone)
-            ProfileField("Date of Birth", dob)
-            ProfileField("Anniversary", anniversary)
-        }
-
-        ProfileField("Type of Party", user.typeOfParty ?: "-")
-        if(isEditing){
-            EditableAuthDealer(profileViewModel = viewModel)
-        }
-        if (!user.authDOC.isNullOrEmpty()) {
-            Card {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text("🏭 Authorized Dealer Of:")
-                    user.authDOC.forEach { Text("• $it") }
-                    println(user.authDOC)
+            ProfileField("Type of Party", user.typeOfParty ?: "-")
+            if (isEditing) {
+                EditableAuthDealer(profileViewModel = viewModel)
+            }
+            if (!user.authDOC.isNullOrEmpty()) {
+                Card {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("🏭 Authorized Dealer Of:")
+                        user.authDOC.forEach { Text("• $it") }
+                        println(user.authDOC)
+                    }
                 }
             }
+            Spacer(modifier = Modifier.height(100.dp))
         }
-        Spacer(modifier = Modifier.height(100.dp))
+    }
+}
+
+@Composable
+fun ProfileActionButtons(
+    isEditing: Boolean,
+    onSave: () -> Unit,
+    onCancel: () -> Unit,
+    onEdit: () -> Unit,
+    onChangePassword: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (isEditing) {
+            Button(onClick = onSave, shape = RoundedCornerShape(12.dp)) {
+                Text("Save")
+            }
+            OutlinedButton(onClick = onCancel, shape = RoundedCornerShape(12.dp)) {
+                Text("Cancel")
+            }
+        } else {
+            Button(onClick = onEdit, shape = RoundedCornerShape(12.dp)) {
+                Text("Edit")
+            }
+            Button(onClick = onChangePassword, shape = RoundedCornerShape(12.dp)) {
+                Text("Change Password")
+            }
+        }
     }
 }
 
@@ -342,6 +400,7 @@ fun ProfileContentPreview() {
         user = mockUser,
         viewModel = mockViewModel,
         onSave = {},
-        onCancel = {}
+        onCancel = {},
+        onPasswordUpdate = {}
     )
 }

@@ -26,6 +26,7 @@ class AuthViewModel(private val authRepo: AuthRepo = AuthRepo()) : ViewModel() {
             onResult(success)
         }
     }
+    fun updatePassword(uid: String, newPassword: String, onComplete: () -> Unit) {}
 
     // Function for sign out
     fun signOut() {
