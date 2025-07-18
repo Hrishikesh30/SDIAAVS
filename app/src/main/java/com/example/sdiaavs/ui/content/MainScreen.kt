@@ -46,7 +46,7 @@ fun MainScreen(
     val uid = currentUser?.uid
 
     LaunchedEffect(uid) {
-        if (uid != null && userViewModel.userData == null) {
+        if (uid != null ) {
             userViewModel.loadUserData(uid)
         }
     }
@@ -96,13 +96,14 @@ fun ContentScreen(
     when (selectedItem) {
         0 -> HomePage(
             userViewModel = userViewModel,
+            authViewModel = authViewModel,
+            onLogoutClick = onLogout
         )
 
         1 -> ProfilePage(
-            authViewModel= authViewModel,
             modifier = Modifier,
             userViewModel = userViewModel,
-            onLogoutClick = onLogout
+            authViewModel = authViewModel
         )
 
         2 -> SearchPage()

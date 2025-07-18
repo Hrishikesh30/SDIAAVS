@@ -1,154 +1,226 @@
 package com.example.sdiaavs.ui.content
 
+import android.app.DatePickerDialog
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.sdiaavs.dataModel.UserData
 import com.example.sdiaavs.viewModel.AuthViewModel
+import com.example.sdiaavs.viewModel.ProfileViewModel
 import com.example.sdiaavs.viewModel.UserViewModel
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
-
-
-fun formatTimestamp(timestamp: Timestamp?): String {
-    return if (timestamp != null) {
-        val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-        val date = timestamp.toDate()
-        sdf.format(date)
-    } else {
-        "-"
-    }
-}
 
 @Composable
 fun ProfilePage(
-    authViewModel: AuthViewModel,
     userViewModel: UserViewModel,
-    modifier: Modifier = Modifier,
-    onLogoutClick: () -> Unit
+    authViewModel: AuthViewModel,
+    modifier: Modifier = Modifier
 ) {
-    val user = userViewModel.userData
+    val user by userViewModel.userData
+    val context = LocalContext.current
+    val uid = authViewModel.uid
 
-    if (user != null) {
+
+    user?.let { u ->
+        val profileViewModel = remember { ProfileViewModel(userViewModel) }
+        LaunchedEffect(Unit) {
+                profileViewModel.initializeFromUser(u)
+        }
         ProfileContent(
-            name = user.name ?: "",
-            email = user.email ?: "",
-            firmName = user.firmName ?: "-",
-            firmAddress = user.firmAddress ?: "-",
-            region = user.region ?: "-",
-            phone = user.phone ?: "-",
-            certificate = user.certificate ?: "-",
-            dob = formatTimestamp(user.dob),
-            anniversary = formatTimestamp(user.anniversary),
-            typeOfParty = user.typeOfParty ?: "-",
-            authDOC = user.authDOC ?: emptyList(),
-            onLogoutClick = {
-                authViewModel.signOut()
-                onLogoutClick()
-            },
+            user = u,
+            viewModel = profileViewModel,
 
+            onSave = {
+                if (uid != null) {
+                    profileViewModel.saveChanges(uid, u) {
+                        userViewModel.loadUserData(uid)
+                        Toast.makeText(context, "Profile updated", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            },
+            onCancel = {
+                profileViewModel.cancelEditing(u)
+            },
+            onPasswordUpdate = {
+                uid?.let {
+                    authViewModel.updatePassword(it, newPassword = "") {
+                        Toast.makeText(context, "Password updated", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         )
-    } else {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+    } ?: run {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Text("Loading...", style = MaterialTheme.typography.headlineMedium)
+            CircularProgressIndicator()
         }
     }
 }
+
+
 @Composable
 fun ProfileContent(
-    name: String,
-    email: String,
-    firmName: String,
-    firmAddress: String,
-    region: String,
-    phone: String,
-    certificate: String,
-    dob: String,
-    anniversary: String,
-    typeOfParty: String,
-    authDOC: List<String>,
-    onLogoutClick: () -> Unit,
+    user: UserData,
+    viewModel: ProfileViewModel,
+    onSave: () -> Unit,
+    onCancel: () -> Unit,
+    onPasswordUpdate: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
-
-    // Make outermost container scrollable and ensure full height is allowed
-    Column(
-        modifier = Modifier
-            .fillMaxSize() // Make sure it takes full screen height
-            .verticalScroll(scrollState) // Enable scrolling
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.Start
-    ) {
-        // Header Row with logout button
+    val isEditing by viewModel.isEditing
+    val firmAddress by viewModel.firmAddress
+    val region by viewModel.region
+    val phone by viewModel.phone
+    val dob by viewModel.dob
+    val anniversary by viewModel.anniversary
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Row 1: Title
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "👤 User Profile",
+                text = "\uD83D\uDC64 Profile",
                 style = MaterialTheme.typography.headlineSmall
             )
-            Button(onClick = onLogoutClick) {
-                Text("Logout")
-            }
+            Spacer(modifier = Modifier.width(16.dp))
+            ProfileActionButtons(
+                onSave = onSave,
+                onCancel = onCancel,
+                onEdit = { viewModel.toggleEditing() },
+                onChangePassword = onPasswordUpdate,
+                isEditing = isEditing,
+                modifier = Modifier.alignByBaseline()
+            )
         }
 
-        // Profile fields
-        ProfileField(label = "Name", value = name)
-        ProfileField(label = "Email", value = email)
-        ProfileField(label = "Firm Name", value = firmName)
-        ProfileField(label = "Firm Address", value = firmAddress)
-        ProfileField(label = "Region", value = region)
-        ProfileField(label = "Phone", value = phone)
-        ProfileField(label = "Certificate", value = certificate)
-        ProfileField(label = "Date of Birth", value = dob)
-        ProfileField(label = "Anniversary", value = anniversary)
-        ProfileField(label = "Type of Party", value = typeOfParty)
-        if (authDOC.isNotEmpty()) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    text = "🏭 Authorized Dealer Of:",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                authDOC.forEach {
-                    Text("• $it", style = MaterialTheme.typography.bodyMedium)
+
+            ProfileField("Name", user.name ?: "-")
+            ProfileField("User ID", user.email ?: "-")
+            ProfileField("Firm Name", user.firmName ?: "-")
+
+            if (isEditing) {
+                EditableProfileField(
+                    "Firm Address",
+                    firmAddress
+                ) { viewModel.updateField("firmAddress", it) }
+                EditableProfileField("Region", region) { viewModel.updateField("region", it) }
+                EditableProfileField("Phone", phone) { viewModel.updateField("phone", it) }
+                EditableDatePicker("Date of Birth", dob) { viewModel.updateField("dob", it) }
+                EditableDatePicker(
+                    "Anniversary",
+                    anniversary
+                ) { viewModel.updateField("anniversary", it) }
+
+            } else {
+                ProfileField("Firm Address", firmAddress)
+                ProfileField("Region", region)
+                ProfileField("Phone", phone)
+                ProfileField("Date of Birth", dob)
+                ProfileField("Anniversary", anniversary)
+            }
+
+            ProfileField("Type of Party", user.typeOfParty ?: "-")
+            if (isEditing) {
+                EditableAuthDealer(profileViewModel = viewModel)
+            }
+            if (!viewModel.selectedCompanies.value.isNullOrEmpty()) {
+                Card {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("🏭 Authorized Dealer Of:")
+                        viewModel.selectedCompanies.value.forEach { company ->
+                            Text("• ${company.name}")
+                        }
+                    }
                 }
             }
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
-        Spacer(modifier = Modifier.height(100.dp))
+}
+
+@Composable
+fun ProfileActionButtons(
+    isEditing: Boolean,
+    onSave: () -> Unit,
+    onCancel: () -> Unit,
+    onEdit: () -> Unit,
+    onChangePassword: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (isEditing) {
+            Button(onClick = onSave, shape = RoundedCornerShape(12.dp)) {
+                Text("Save")
+            }
+            OutlinedButton(onClick = onCancel, shape = RoundedCornerShape(12.dp)) {
+                Text("Cancel")
+            }
+        } else {
+            Button(onClick = onEdit, shape = RoundedCornerShape(12.dp)) {
+                Text("Edit")
+            }
+            Button(onClick = onChangePassword, shape = RoundedCornerShape(12.dp)) {
+                Text("Change Password")
+            }
+        }
     }
 }
 
@@ -175,21 +247,161 @@ fun ProfileField(label: String, value: String) {
     }
 }
 
+@Composable
+fun EditableProfileField(label: String, value: String, onValueChange: (String) -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            TextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+fun EditableDatePicker(
+    label: String,
+    value: String,
+    onDateSelected: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = remember { Calendar.getInstance() }
+
+    val formatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
+    // Open date picker dialog on click
+    val datePickerDialog = remember {
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                calendar.set(year, month, dayOfMonth)
+                val selectedDate = formatter.format(calendar.time)
+                onDateSelected(selectedDate)
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { datePickerDialog.show() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = value.ifBlank { "Select date" },
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun EditableAuthDealer(profileViewModel: ProfileViewModel) {
+    val query by profileViewModel.query
+    val suggestions by profileViewModel.suggestions
+    val selectedCompanies by profileViewModel.selectedCompanies
+
+    Column {
+        OutlinedTextField(
+            value = query,
+            onValueChange = {
+                profileViewModel.updateQuery(it, profileViewModel::searchCompaniesByPrefix)
+            },
+            label = { Text("Search Company") }
+        )
+
+        suggestions.forEach { company ->
+            Text(
+                text = company.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        profileViewModel.selectCompany(company)
+                    }
+                    .padding(8.dp)
+            )
+        }
+
+        // Show selected companies with ❌
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 8.dp)
+        ) {
+            selectedCompanies.forEach { company ->
+                AssistChip(
+                    onClick = { profileViewModel.removeCompany(company) },
+                    label = {
+                        Text(
+                            text = company.name,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
+                        )
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Remove",
+                            tint = Color.Gray
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors()
+                )
+            }
+        }
+    }
+}
 @Preview(showBackground = true)
 @Composable
-fun ProfilePreview() {
-    ProfileContent(
+fun ProfileContentPreview() {
+    val mockUser = UserData(
         name = "श्री आशीष जी दुबे",
         email = "sdiaavs_2@sdiaavs.com",
         firmName = "भाग्यश्री मेडिकोज",
-        firmAddress = "जवाहर मार्ग",
-        region = "जवाहर मार्ग",
-        phone = "9826020160",
-        certificate = "Yes",
-        dob = "13 Nov 1970",
-        anniversary = "05 Feb 1995",
-        typeOfParty = "Retailer",
-        authDOC = listOf("Patanjali", "Dabur"),
-        onLogoutClick = {},
+        firmAddress = "9B-xyz block",
+        region = "Jawahar Marg",
+        phone = "9876543210",
+        dob = Timestamp(Date()),
+        anniversary = Timestamp(Date()),
+        typeOfParty = "retailer",
+        authDOC = listOf("Patanjali", "Dabur")
+    )
+
+    val mockViewModel = remember {
+        ProfileViewModel(UserViewModel()).apply {
+            initializeFromUser(mockUser)
+        }
+    }
+
+    ProfileContent(
+        user = mockUser,
+        viewModel = mockViewModel,
+        onSave = {},
+        onCancel = {},
+        onPasswordUpdate = {}
     )
 }

@@ -34,7 +34,6 @@ class MainActivity : ComponentActivity() {
             } else {
                 "userLogin"
             }
-
             androidx.navigation.compose.NavHost(
                 navController = navController,
                 startDestination = startDestination

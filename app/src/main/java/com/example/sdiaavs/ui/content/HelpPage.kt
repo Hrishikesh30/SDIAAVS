@@ -26,26 +26,6 @@ fun HelpPage(){
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text("Details")
 
-        // Scrollable block
-        Box(
-            modifier = Modifier
-                .height(150.dp) // Set desired height
-                .fillMaxWidth()
-                .border(1.dp, Color.Gray)
-                .verticalScroll(rememberScrollState()) // Enable scrolling
-                .padding(8.dp)
-        ) {
-            Column {
-                repeat(20) { index ->
-                    Text(text = "Item #$index")
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Other details")
     }
 }
