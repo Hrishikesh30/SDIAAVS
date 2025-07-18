@@ -177,12 +177,13 @@ fun ProfileContent(
             if (isEditing) {
                 EditableAuthDealer(profileViewModel = viewModel)
             }
-            if (!user.authDOC.isNullOrEmpty()) {
+            if (!viewModel.selectedCompanies.value.isNullOrEmpty()) {
                 Card {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text("🏭 Authorized Dealer Of:")
-                        user.authDOC.forEach { Text("• $it") }
-                        println(user.authDOC)
+                        viewModel.selectedCompanies.value.forEach { company ->
+                            Text("• ${company.name}")
+                        }
                     }
                 }
             }
@@ -333,13 +334,13 @@ fun EditableAuthDealer(profileViewModel: ProfileViewModel) {
             label = { Text("Search Company") }
         )
 
-        suggestions.forEach { companyName ->
+        suggestions.forEach { company ->
             Text(
-                text = companyName,
+                text = company.name,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        profileViewModel.selectCompany(companyName)
+                        profileViewModel.selectCompany(company)
                     }
                     .padding(8.dp)
             )
@@ -356,7 +357,7 @@ fun EditableAuthDealer(profileViewModel: ProfileViewModel) {
                     onClick = { profileViewModel.removeCompany(company) },
                     label = {
                         Text(
-                            text = company,
+                            text = company.name,
                             overflow = TextOverflow.Ellipsis,
                             maxLines = 1
                         )

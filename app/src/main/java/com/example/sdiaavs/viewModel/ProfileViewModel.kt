@@ -2,13 +2,16 @@ package com.example.sdiaavs.viewModel
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.sdiaavs.dataModel.CompanyItem
 import com.example.sdiaavs.dataModel.UserData
+import com.example.sdiaavs.repository.ProfileRepo
 import com.google.firebase.Firebase
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.firestore
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
-import androidx.compose.runtime.getValue
 
 
 class ProfileViewModel(
@@ -34,22 +37,22 @@ class ProfileViewModel(
     var query = mutableStateOf("")
         private set
 
-    var suggestions = mutableStateOf<List<String>>(emptyList())
+    var suggestions = mutableStateOf<List<CompanyItem>>(emptyList())
         private set
 
-    var selectedCompanies = mutableStateOf<List<String>>(emptyList())
+    var selectedCompanies = mutableStateOf<List<CompanyItem>>(emptyList())
         private set
 
-    fun updateQuery(newQuery: String, searchFunction: (String, (List<String>) -> Unit) -> Unit) {
+    fun updateQuery(newQuery: String, searchFunction: (String, (List<CompanyItem>) -> Unit) -> Unit) {
         query.value = newQuery
         searchFunction(newQuery) { results ->
             suggestions.value = results
         }
     }
 
-    fun selectCompany(company: String) {
+    fun selectCompany(company: CompanyItem) {
         val updated = selectedCompanies.value.toMutableList()
-        if (!updated.contains(company)) {
+        if (updated.none { it.companyId == company.companyId }) {
             updated.add(company)
             selectedCompanies.value = updated
         }
@@ -57,9 +60,10 @@ class ProfileViewModel(
         suggestions.value = emptyList()
     }
 
-    fun removeCompany(company: String) {
+
+    fun removeCompany(company: CompanyItem) {
         val updated = selectedCompanies.value.toMutableList()
-        updated.remove(company)
+        updated.removeAll { it.companyId == company.companyId }
         selectedCompanies.value = updated
     }
 
@@ -69,8 +73,10 @@ class ProfileViewModel(
         phone.value = user.phone ?: ""
         dob.value = formatTimestamp(user.dob)
         anniversary.value = formatTimestamp(user.anniversary)
-        authDOC.value = user.authDOC ?: emptyList()
-        selectedCompanies.value = user.authDOC ?: emptyList()
+        user.authDOC?.let { loadSelectedCompanyDetails(it) }
+        selectedCompanies.value = (user.authDOC ?: emptyList()).map { id ->
+            CompanyItem(name = "Loading...", companyId = id)
+        }
     }
 
     fun updateField(field: String, value: String) {
@@ -104,7 +110,7 @@ class ProfileViewModel(
             phone = phone.value,
             dob = parseToTimestamp(dob.value),
             anniversary = parseToTimestamp(anniversary.value),
-            authDOC = selectedCompanies.value
+            authDOC = selectedCompanies.value.map { it.companyId }
         )
 
         userViewModel.updateUserData(uid, updatedUser) {
@@ -131,19 +137,20 @@ class ProfileViewModel(
         }
     }
 
-    fun searchCompaniesByPrefix(prefix: String, onResult: (List<String>) -> Unit) {
+    fun searchCompaniesByPrefix(prefix: String, onResult: (List<CompanyItem>) -> Unit) {
         val db = Firebase.firestore
         db.collection("companies")
             .orderBy("companyName")
             .startAt(prefix)
-            //.endAt(prefix + "\uf8ff")
             .limit(10)
             .get()
             .addOnSuccessListener { querySnapshot ->
-                val names = querySnapshot.documents.mapNotNull { it.getString("companyName") }
-                println("db valuew:$db")
-                println("🔍 Found companies: $names")
-                onResult(names)
+                val results = querySnapshot.documents.mapNotNull { doc ->
+                    val name = doc.getString("companyName")
+                    val id = doc.id
+                    if (name != null) CompanyItem(name, id) else null
+                }
+                onResult(results)
             }
             .addOnFailureListener { e ->
                 println("❌ Error fetching companies: ${e.localizedMessage}")
@@ -151,6 +158,10 @@ class ProfileViewModel(
 
     }
 
-
-
+    fun loadSelectedCompanyDetails(ids: List<String>) {
+        viewModelScope.launch {
+            val companies = ProfileRepo().resolveCompanyNamesFromIds(ids)
+            selectedCompanies.value = companies
+        }
+    }
 }
