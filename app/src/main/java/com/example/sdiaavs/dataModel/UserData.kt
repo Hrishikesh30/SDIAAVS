@@ -9,7 +9,7 @@ data class UserData(
     var firmAddress: String? = null,
     var firmName: String = "",
     var phone: String = "",
-    var region: String = "",
+    var region: String?=null,
     var userID: String = "",
     val typeOfParty: String? =null,
     val authDOC: List<String>?=null
