@@ -43,7 +43,7 @@ fun LoginContent(
             painter = painterResource(id = R.drawable.sdiaavs4),
             contentDescription = "App Logo",
             modifier = Modifier
-                .size(100.dp)
+                .size(300.dp)
                 .clip(CircleShape)
         )
 
@@ -52,7 +52,7 @@ fun LoginContent(
             contentDescription = "Banner",
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp) // avoid pushing layout
+                .height(50.dp) // avoid pushing layout
         )
 
         // Email Field
