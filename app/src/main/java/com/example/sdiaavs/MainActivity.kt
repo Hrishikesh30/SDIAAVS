@@ -16,6 +16,7 @@ import com.example.sdiaavs.viewModel.AuthViewModel
 import com.example.sdiaavs.viewModel.AuthViewModelFactory
 import com.example.sdiaavs.viewModel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.example.sdiaavs.ui.content.ChangePasswordPage
 
 class MainActivity : ComponentActivity() {
 
@@ -68,6 +69,16 @@ class MainActivity : ComponentActivity() {
                             navController.navigate("userLogin") {
                                 popUpTo("userHome") { inclusive = true }
                             }
+                        },
+                        navController = navController // Pass navController
+                    )
+                }
+
+                composable("changePassword") {
+                    ChangePasswordPage(
+                        authViewModel = authViewModel,
+                        onPasswordChanged = {
+                            navController.popBackStack() // Go back to profile after change
                         }
                     )
                 }
