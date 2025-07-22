@@ -23,6 +23,15 @@ class AuthRepo( private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstanc
             }
         }
 
+        suspend fun updatePassword(newPassword: String): Boolean {
+            return try {
+                firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
+
         fun signOut() {
             firebaseAuth.signOut()
         }

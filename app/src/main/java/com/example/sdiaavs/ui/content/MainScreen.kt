@@ -23,6 +23,7 @@ import com.example.sdiaavs.dataModel.NavItem
 import com.example.sdiaavs.viewModel.AuthViewModel
 import com.example.sdiaavs.viewModel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth
+import androidx.navigation.NavController
 
 
 @Composable
@@ -30,6 +31,7 @@ fun MainScreen(
     authViewModel: AuthViewModel,
     userViewModel: UserViewModel,
     onLogout: () -> Unit,
+    navController: NavController, // Add this parameter
     modifier: Modifier = Modifier
 ) {
     val navItemList = listOf(
@@ -79,10 +81,10 @@ fun MainScreen(
             selectedItem,
             authViewModel,
             userViewModel,
-            onLogout
+            onLogout,
+            navController // Pass navController
         )
     }
-
 }
 
 @Composable
@@ -91,7 +93,8 @@ fun ContentScreen(
     selectedItem: Int,
     authViewModel: AuthViewModel,
     userViewModel: UserViewModel,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    navController: NavController // Add this parameter
 ) {
     when (selectedItem) {
         0 -> HomePage(
@@ -103,7 +106,10 @@ fun ContentScreen(
         1 -> ProfilePage(
             modifier = Modifier,
             userViewModel = userViewModel,
-            authViewModel = authViewModel
+            authViewModel = authViewModel,
+            onChangePasswordClick = {
+                navController.navigate("changePassword")
+            }
         )
 
         2 -> SearchPage()

@@ -57,7 +57,8 @@ import java.util.Locale
 fun ProfilePage(
     userViewModel: UserViewModel,
     authViewModel: AuthViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onChangePasswordClick: () -> Unit
 ) {
     val user by userViewModel.userData
     val context = LocalContext.current
@@ -84,13 +85,7 @@ fun ProfilePage(
             onCancel = {
                 profileViewModel.cancelEditing(u)
             },
-            onPasswordUpdate = {
-                uid?.let {
-                    authViewModel.updatePassword(it, newPassword = "") {
-                        Toast.makeText(context, "Password updated", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+            onChangePasswordClick = onChangePasswordClick
         )
     } ?: run {
         Box(
@@ -109,7 +104,7 @@ fun ProfileContent(
     viewModel: ProfileViewModel,
     onSave: () -> Unit,
     onCancel: () -> Unit,
-    onPasswordUpdate: () -> Unit
+    onChangePasswordClick: () -> Unit
 ) {
     val isEditing by viewModel.isEditing
     val firmAddress by viewModel.firmAddress
@@ -134,7 +129,7 @@ fun ProfileContent(
                 onSave = onSave,
                 onCancel = onCancel,
                 onEdit = { viewModel.toggleEditing() },
-                onChangePassword = onPasswordUpdate,
+                onChangePassword = onChangePasswordClick,
                 isEditing = isEditing,
                 modifier = Modifier.alignByBaseline()
             )
@@ -402,6 +397,6 @@ fun ProfileContentPreview() {
         viewModel = mockViewModel,
         onSave = {},
         onCancel = {},
-        onPasswordUpdate = {}
+        onChangePasswordClick = {}
     )
 }
