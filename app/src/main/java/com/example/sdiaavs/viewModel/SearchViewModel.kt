@@ -28,9 +28,10 @@ class SearchViewModel : ViewModel() {
 
     private fun searchCompaniesByPrefix(prefix: String) {
         val db = Firebase.firestore
+        val upperPrefix = prefix.uppercase()
         db.collection("companies")
             .orderBy("companyName")
-            .startAt(prefix)
+            .startAt(upperPrefix)
             .limit(10)
             .get()
             .addOnSuccessListener { querySnapshot ->
@@ -42,7 +43,7 @@ class SearchViewModel : ViewModel() {
                 suggestions.value = results
             }
             .addOnFailureListener { e ->
-                println("❌ Error fetching companies: ${e.localizedMessage}")
+                println("\u274c Error fetching companies: ${e.localizedMessage}")
             }
     }
 

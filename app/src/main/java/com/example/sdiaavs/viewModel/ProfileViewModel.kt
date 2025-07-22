@@ -139,9 +139,10 @@ class ProfileViewModel(
 
     fun searchCompaniesByPrefix(prefix: String, onResult: (List<CompanyItem>) -> Unit) {
         val db = Firebase.firestore
+        val upperPrefix = prefix.uppercase()
         db.collection("companies")
             .orderBy("companyName")
-            .startAt(prefix)
+            .startAt(upperPrefix)
             .limit(10)
             .get()
             .addOnSuccessListener { querySnapshot ->
@@ -153,9 +154,8 @@ class ProfileViewModel(
                 onResult(results)
             }
             .addOnFailureListener { e ->
-                println("❌ Error fetching companies: ${e.localizedMessage}")
+                println("\u274c Error fetching companies: ${e.localizedMessage}")
             }
-
     }
 
     fun loadSelectedCompanyDetails(ids: List<String>) {
