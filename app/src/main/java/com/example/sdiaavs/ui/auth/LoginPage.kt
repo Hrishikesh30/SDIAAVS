@@ -59,7 +59,7 @@ fun LoginContent(
         OutlinedTextField(
             value = email,
             onValueChange = onEmailChange,
-            label = { Text("Email") },
+            label = { Text("User ID") },
             modifier = Modifier.fillMaxWidth()
         )
 
