@@ -120,7 +120,8 @@ fun LoginPage(
         onEmailChange = { email = it },
         onPasswordChange = { password = it },
         onLoginClick = {
-            authViewModel.login(email, password) { success, _ ->
+            val processedEmail = "${email.trim()}@iaavs.com"
+            authViewModel.login(processedEmail  , password) { success, _ ->
                 if (success) onLoginSuccess() else error = "Login failed!"
             }
         },
